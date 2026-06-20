@@ -1,0 +1,136 @@
+classDiagram
+    class ITMPlugin {
+        <<interface>>
+        +GetInfo(PluginInfoIndex index) const wchar_t*
+        +GetItem(int index) IPluginItem*
+        +GetItemCount() int
+        +DataRequired() void
+        +GetTooltipInfo() const wchar_t*
+        +ShowOptionsDialog(void* parent) int
+        +GetAPIVersion() int
+    }
+
+    class IPluginItem {
+        <<interface>>
+        +GetItemName() const wchar_t*
+        +GetItemId() const wchar_t*
+        +GetItemLableText() const wchar_t*
+        +GetItemValueText() const wchar_t*
+        +GetItemValueSampleText() const wchar_t*
+        +GetItemWidth() int
+        +OnMouseEvent(MouseEventType event_type, int x, int y, void* hWnd, int flags) int
+        +OnItemInfo(int info_type, void* arg1, void* arg2) void*
+    }
+
+    class PowerMon {
+        -static PowerMon m_instance
+        -std::vector<PowerMonItem*> m_items
+        -PowerMon()
+        +static PowerMon* Instance()
+        +GetInfo(PluginInfoIndex index) const wchar_t* override
+        +GetItem(int index) IPluginItem* override
+        +GetItemCount() int override
+        +DataRequired() void override
+        +GetTooltipInfo() const wchar_t* override
+        +ShowOptionsDialog(void* parent) int override
+        +GetAPIVersion() int override
+    }
+
+    class PowerMonItem {
+        -std::wstring m_name
+        -std::wstring m_id
+        -std::wstring m_label
+        -std::wstring m_value
+        -std::wstring m_sample_text
+        +PowerMonItem(wstring name, wstring id, wstring label, wstring sample)
+        +GetItemName() const wchar_t* override
+        +GetItemId() const wchar_t* override
+        +GetItemLableText() const wchar_t* override
+        +GetItemValueText() const wchar_t* override
+        +GetItemValueSampleText() const wchar_t* override
+        +GetItemWidth() int override
+        +UpdateValue(double value, const SettingData& setting) void
+        +OnMouseEvent(MouseEventType event_type, int x, int y, void* hWnd, int flags) int override
+        +OnItemInfo(int info_type, void* arg1, void* arg2) void* override
+    }
+
+    class SettingData {
+        +bool cpu_mon_enable
+        +bool gpu_mon_enable
+        +bool battery_mon_enable
+        +int digit_length
+        +int spacing_control
+        +wchar_t unit_string[16]
+        +bool smart_mode
+    }
+
+    class ConfigManager {
+        -static ConfigManager m_instance
+        -SettingData m_setting
+        -std::wstring m_config_path
+        -ConfigManager()
+        +static ConfigManager& Instance()
+        +LoadConfig() void
+        +SaveConfig() void
+        +GetSetting() const SettingData&
+        +UpdateSetting(const SettingData& setting) void
+    }
+
+    class BatteryReader {
+        -static BatteryReader m_instance
+        -BatteryReader()
+        +static BatteryReader& Instance()
+        +GetBatteryDischargeRate(double& out_power_w) bool
+        -GetBatteryHandle() HANDLE
+    }
+
+    class PdhPowerReader {
+        -static PdhPowerReader m_instance
+        -PDH_HQUERY m_query
+        -PDH_HCOUNTER m_cpu_power_counter
+        -bool m_pdh_initialized
+        -PdhPowerReader()
+        +static PdhPowerReader& Instance()
+        +Init() bool
+        +GetCpuPower(double& out_power_w) bool
+        -GetCpuPowerFallbackWmi(double& out_power_w) bool
+        -GetCpuPowerStaticEstimation(double& out_power_w) bool
+        +Close() void
+    }
+
+    class GpuPowerReader {
+        -static GpuPowerReader m_instance
+        -HMODULE m_nvml_lib
+        -HMODULE m_adl_lib
+        -bool m_nvml_initialized
+        -bool m_adl_initialized
+        -ULONGLONG m_last_poll_time
+        -bool m_gpu_sleeping
+        -GpuPowerReader()
+        +static GpuPowerReader& Instance()
+        +Init() bool
+        +GetGpuPower(double& out_power_w) bool
+        -GetNvidiaPower(double& out_power_w) bool
+        -GetAmdPower(double& out_power_w) bool
+        -GetD3dKmtPower(double& out_power_w) bool
+        +Close() void
+    }
+
+    class OptionsDlg {
+        -HWND m_hwnd
+        -SettingData m_temp_setting
+        +static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+        +Show(HWND parent_hwnd) int
+    }
+
+    ITMPlugin <|-- PowerMon
+    IPluginItem <|-- PowerMonItem
+    PowerMon *-- PowerMonItem : manages
+    PowerMonItem ..> SettingData : uses for format
+    PowerMon ..> ConfigManager : queries settings
+    PowerMon ..> BatteryReader : queries
+    PowerMon ..> PdhPowerReader : queries
+    PowerMon ..> GpuPowerReader : queries
+    PowerMon ..> OptionsDlg : instantiates
+    OptionsDlg ..> ConfigManager : updates settings
+    ConfigManager *-- SettingData : holds

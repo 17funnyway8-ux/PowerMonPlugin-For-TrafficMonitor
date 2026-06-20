@@ -1,0 +1,36 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "power_mon_plugin", "power_mon_plugin.vcxproj", "{43118A4F-5CF9-4A9B-A364-F3F3E836A329}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|ARM64 = Release|ARM64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|ARM64.Build.0 = Debug|ARM64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|Win32.ActiveCfg = Debug|Win32
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|Win32.Build.0 = Debug|Win32
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|x64.ActiveCfg = Debug|x64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Debug|x64.Build.0 = Debug|x64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|ARM64.ActiveCfg = Release|ARM64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|ARM64.Build.0 = Release|ARM64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|Win32.ActiveCfg = Release|Win32
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|Win32.Build.0 = Release|Win32
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|x64.ActiveCfg = Release|x64
+		{43118A4F-5CF9-4A9B-A364-F3F3E836A329}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8BF2C2F6-B2FA-41B0-A227-F1321D5D9A9C}
+	EndGlobalSection
+EndGlobal

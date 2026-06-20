@@ -1,0 +1,81 @@
+sequenceDiagram
+    autonumber
+    participant TM as TrafficMonitor Main Program
+    participant PM as PowerMon Plugin (ITMPlugin)
+    participant CM as ConfigManager
+    participant BR as BatteryReader
+    participant PR as PdhPowerReader
+    participant GR as GpuPowerReader
+    participant PI as PowerMonItem (IPluginItem)
+
+    Note over TM, PI: 轮询周期触发：每秒调用一次 DataRequired()
+
+    TM->>PM: DataRequired()
+    PM->>CM: GetSetting()
+    CM-->>PM: return SettingData (cached)
+    PM->>PM: GetSystemPowerStatus()
+
+    alt 供电状态为电池模式 (DC Mode)
+        PM->>BR: GetBatteryDischargeRate(out_power)
+        alt 电池读取成功
+            BR-->>PM: return true (out_power = DischargeRate)
+        else 电池读取失败 (回退/未装电池)
+            BR-->>PM: return false
+            PM->>PM: 设为 0.0 W
+        end
+        
+        alt 智能显示模式启用 (smart_mode == true)
+            PM->>PI: UpdateValue(电池放电功率, setting)
+            Note over PM, PI: 只显示并更新【电池监控子项】，其他子项设为 0.0 W 或不渲染
+        else 智能模式未启用
+            PM->>PI: UpdateValue(各对应子项数据, setting)
+        end
+
+    else 供电状态为电源模式 (AC Mode)
+        alt 开启 CPU 监控 (cpu_mon_enable == true)
+            PM->>PR: GetCpuPower(out_power)
+            alt PDH 读取成功
+                PR-->>PM: return true (out_power = CPU Power)
+            else PDH 失败，回退 WMI
+                PR->>PR: GetCpuPowerFallbackWmi(out_power)
+                alt WMI 成功
+                    PR-->>PM: return true
+                else WMI 失败，使用静态估算
+                    PR->>PR: GetCpuPowerStaticEstimation(out_power)
+                    PR-->>PM: return true (out_power = 静态估算值)
+                end
+                PR-->>PM: return true
+            end
+        else CPU 监控关闭
+            PM->>PM: CPU 功耗 = 0.0 W
+        end
+
+        alt 开启 GPU 监控 (gpu_mon_enable == true)
+            PM->>GR: GetGpuPower(out_power)
+            alt 处于低功耗防频繁唤醒控制 (Timer check)
+                GR-->>PM: return true (out_power = 上次缓存值/0.0W)
+            else 执行真正的硬件轮询
+                alt NVML 动态加载并可用 (NVIDIA)
+                    GR-->>PM: return true (out_power = GPU Power)
+                else ADL 动态加载并可用 (AMD)
+                    GR-->>PM: return true (out_power = GPU Power)
+                else 回退 D3DKMT 通用查询
+                    GR->>GR: GetD3dKmtPower(out_power)
+                    GR-->>PM: return true
+                end
+            end
+        else GPU 监控关闭
+            PM->>PM: GPU 功耗 = 0.0 W
+        end
+
+        alt 智能显示模式启用 (smart_mode == true)
+            PM->>PI: UpdateValue(CPU功耗 + GPU功耗, setting)
+            Note over PM, PI: 只显示并更新【智能合并监控子项】，其他设为 0.0 W 或不渲染
+        else 智能模式未启用
+            PM->>PI: UpdateValue(各对应子项数据, setting)
+        end
+    end
+
+    TM->>PI: GetItemValueText()
+    PI-->>TM: return Formatted String (遵循 digit_length, spacing_control, unit_string)
+    TM->>TM: 渲染至状态栏或悬浮窗
