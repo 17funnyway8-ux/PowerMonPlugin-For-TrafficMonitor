@@ -54,7 +54,7 @@ static fn_ADL_Adapter_NumberOfAdapters_Get p_ADL_Adapter_NumberOfAdapters_Get = 
 static fn_ADL_Adapter_AdapterInfo_Get p_ADL_Adapter_AdapterInfo_Get = nullptr;
 static fn_ADL_Overdrive8_CurrentStatus_Get p_ADL_Overdrive8_CurrentStatus_Get = nullptr;
 
-static void* __stdcall ADL_Main_Memory_Alloc(int iSize) {
+static void* ADL_Main_Memory_Alloc(int iSize) {
     return malloc(iSize);
 }
 
