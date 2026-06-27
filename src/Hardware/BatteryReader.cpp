@@ -22,9 +22,6 @@ BatteryReader::~BatteryReader()
 {
 }
 
-BatteryReader::BatteryReader(const BatteryReader&) = delete;
-BatteryReader& BatteryReader::operator=(const BatteryReader&) = delete;
-
 BatteryReader& BatteryReader::Instance()
 {
     return m_instance;
