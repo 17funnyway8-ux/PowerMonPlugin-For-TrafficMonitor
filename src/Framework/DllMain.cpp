@@ -1,4 +1,5 @@
 #include "../Core/PowerMon.h"
+#include <windows.h>
 
 // 唯一导出的获取插件实例的函数
 extern "C" __declspec(dllexport) ITMPlugin* TMPluginGetInstance()

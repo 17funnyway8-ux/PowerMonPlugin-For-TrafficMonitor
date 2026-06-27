@@ -1,9 +1,12 @@
 #include "BatteryReader.h"
+#include <windows.h>
+#include <winioctl.h>
 #include <setupapi.h>
 #include <devguid.h>
 #include <poclass.h>
 #include <comdef.h>
 #include <WbemIdl.h>
+#include <cmath>
 
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "ole32.lib")
@@ -19,6 +22,9 @@ BatteryReader::~BatteryReader()
 {
 }
 
+BatteryReader::BatteryReader(const BatteryReader&) = delete;
+BatteryReader& BatteryReader::operator=(const BatteryReader&) = delete;
+
 BatteryReader& BatteryReader::Instance()
 {
     return m_instance;
@@ -26,7 +32,7 @@ BatteryReader& BatteryReader::Instance()
 
 HANDLE BatteryReader::GetBatteryHandle()
 {
-    HDEVINFO hDevInfo = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_BATTERY, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    HDEVINFO hDevInfo = SetupDiGetClassDevsW(&GUID_DEVICE_BATTERY, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
     if (hDevInfo == INVALID_HANDLE_VALUE)
     {
         return INVALID_HANDLE_VALUE;
@@ -38,7 +44,7 @@ HANDLE BatteryReader::GetBatteryHandle()
     HANDLE hBattery = INVALID_HANDLE_VALUE;
 
     // 枚举第一个找到的电池设备
-    if (SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &GUID_DEVINTERFACE_BATTERY, 0, &did))
+    if (SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &GUID_DEVICE_BATTERY, 0, &did))
     {
         DWORD cbRequired = 0;
         // 获取所需的缓冲区大小
@@ -100,15 +106,16 @@ bool BatteryReader::GetBatteryDischargeRate(double& out_power_w)
             if (DeviceIoControl(hBattery, IOCTL_BATTERY_QUERY_STATUS, &bws, sizeof(bws),
                 &bs, sizeof(bs), &dwBytesReturned, nullptr))
             {
-                // DischargeRate 大于 0 且处于放电状态
+                // Rate 大于 0 且处于放电状态
                 // 状态位：BATTERY_DISCHARGING 表示放电
-                if ((bs.PowerState & BATTERY_DISCHARGING) && bs.DischargeRate != BATTERY_UNKNOWN_RATE)
+                if ((bs.PowerState & BATTERY_DISCHARGING) && bs.Rate != BATTERY_UNKNOWN_RATE)
                 {
-                    double rate = bs.DischargeRate;
+                    // Rate 在放电时可能为负值（根据某些 ACPI 规范，也可能为正值，所以取绝对值）
+                    double rate = std::abs(static_cast<double>(bs.Rate));
                     // 判断单位是 mW 还是 mA
-                    // 根据 MSDN：如果 Capabilities 包含 BATTERY_SYSTEM_SOURCE_RATE，单位是 mW。
-                    // 否则，如果不是 mW，单位则是 mA，需乘以当前电压来转换成 mW。
-                    if (!(bi.Capabilities & BATTERY_SYSTEM_SOURCE_RATE))
+                    // 根据 MSDN：如果 Capabilities 没有设置 BATTERY_CAPACITY_RELATIVE，单位是 mW。
+                    // 否则，如果是相对值，单位是 mA，需乘以当前电压来转换成 mW。
+                    if (bi.Capabilities & BATTERY_CAPACITY_RELATIVE)
                     {
                         // 值为 mA，转换：mW = mA * (Voltage / 1000)
                         if (bs.Voltage != BATTERY_UNKNOWN_VOLTAGE && bs.Voltage > 0)

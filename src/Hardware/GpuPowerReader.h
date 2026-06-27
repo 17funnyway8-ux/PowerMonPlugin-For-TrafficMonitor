@@ -4,6 +4,8 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+
+typedef LONG NTSTATUS;
 #include <d3dkmthk.h>
 
 class GpuPowerReader
