@@ -1,6 +1,7 @@
 #include "BatteryReader.h"
 #include <windows.h>
 #include <winioctl.h>
+#include <initguid.h>
 #include <setupapi.h>
 #include <devguid.h>
 #include <poclass.h>
